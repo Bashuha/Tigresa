@@ -1,6 +1,6 @@
 import asyncio
 
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from config import TOKEN
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
@@ -34,6 +34,11 @@ async def check_csv(
         for row in word_reader:
             csv_value.append(row)
 
+    session = [db async for db in session()][0]
+    check_user = await session.execute(select(db_schema.User).where(db_schema.User.tg_id == user_id))
+    user_exist = check_user.scalar_one_or_none()
+    if not user_exist:
+        ...
     insert_set_name = await session.execute(
         insert(db_schema.SetName).
         values(
@@ -114,5 +119,5 @@ async def handle_file(
 
 
 if __name__ == "__main__":
-    asyncio.run(db_schema.init_models())
+    # asyncio.run(db_schema.init_models())
     asyncio.run(dp.start_polling(bot, session=get_db))

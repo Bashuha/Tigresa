@@ -5,7 +5,7 @@ from config import DB
 
 
 engine = create_async_engine(
-   f'mysql+asyncmy://{DB.get("user")}:{DB.get("password")}@localhost/{DB.get("database")}',
+   f'postgresql+asyncpg://{DB.get("user")}:{DB.get("password")}@localhost:{DB.get("port")}/{DB.get("database")}',
     echo=DB.get('echo'),
     pool_recycle=3600
 )
