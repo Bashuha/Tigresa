@@ -1,9 +1,10 @@
 import asyncio
+from typing import Any, Dict, Optional, Union
 
 from sqlalchemy import insert, select
 from config import TOKEN
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, Filter
 import csv
 from database.engine import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ async def check_csv(
     message: types.Message,
     session: AsyncSession,
 ):
-    user_id = message.from_user.id
+    tg_user_id = message.from_user.id
     file_id = message.document.file_id
     file_data = await bot.get_file(file_id)
     file_path = file_data.file_path
@@ -34,11 +35,19 @@ async def check_csv(
         for row in word_reader:
             csv_value.append(row)
 
-    session = [db async for db in session()][0]
-    check_user = await session.execute(select(db_schema.User).where(db_schema.User.tg_id == user_id))
-    user_exist = check_user.scalar_one_or_none()
-    if not user_exist:
-        ...
+    check_user = await session.execute(
+        select(db_schema.User.id).
+        where(db_schema.User.tg_id == tg_user_id)
+    )
+    user_id = check_user.scalar_one_or_none()
+    if not user_id:
+        insert_user = await session.execute(
+            insert(db_schema.User).
+            values(tg_id=tg_user_id)
+        )
+        user_id = insert_user.inserted_primary_key[0]
+        await session.commit()
+
     insert_set_name = await session.execute(
         insert(db_schema.SetName).
         values(
@@ -47,12 +56,12 @@ async def check_csv(
         )
     )
     await session.commit()
-    set_id = insert_set_name.lastrowid
+    set_id = insert_set_name.inserted_primary_key
     insert_word = [
         {
             'first_word': word[0],
             'second_word': word[1],
-            'set_id': set_id,
+            'set_id': set_id[0],
         }
         for word in csv_value
     ]
@@ -62,24 +71,6 @@ async def check_csv(
         values(insert_word)
     )
     await session.commit()
-    # try:
-    #     wb = openpyxl.load_workbook("temp.csv", data_only=True)
-    #     ws = wb.active
-    #     rows = ws.values
-    # except Exception as e:
-    #     await message.reply("Произошла ошибка при чтении файла! Попробуйте снова.")
-    #     return
-    
-    # columns = ['question', 'answer']
-    
-    # if set(ws[0]) != set(columns):
-    #     await message.reply("Неправильная структура CSV! Должны быть колонки 'question' и 'answer'.")
-    #     return
-    
-    # for row in rows:
-    #     if not len(row[0]) or not len(row[1]):
-    #         await message.reply("Все строки должны быть заполнены в обеих колонках.")
-    #         return
     
     await message.reply("CSV успешно проверен!")
 
@@ -110,7 +101,50 @@ And I can ask you about them, probably..
     await message.answer(text=text)
 
 
-@dp.message()
+from aiogram.types import Message, User
+
+class HelloFilter(Filter):
+    def __init__(self, name: Optional[str] = None) -> None:
+        self.name = name
+
+    async def __call__(
+        self,
+        message: Message,
+        event_from_user: User,
+        # Filters also can accept keyword parameters like in handlers
+    ) -> Union[bool, Dict[str, Any]]:
+        if message.text.casefold() == "hello":
+            # Returning a dictionary that will update the context data
+            return {"name": event_from_user.mention_html(name=self.name)}
+        return False
+
+
+# @dp.message(HelloFilter())
+# async def my_handler(
+#     message: Message, name: str  # Now we can accept "name" as named parameter
+# ) -> Any:
+#     return message.answer("Hello, {name}!".format(name=name))
+
+
+
+class DBFilter(Filter):
+    def __init__(
+        self,
+        session: AsyncSession = get_db,
+    ):
+        self.session = session
+
+    async def __call__(
+        self,
+        message: types.Message,
+    ):
+        if message.document:
+            conn = [db async for db in self.session()][0]
+            return {"session":conn}
+        return False
+
+
+@dp.message(DBFilter())
 async def handle_file(
     message: types.Message,
     session: AsyncSession,
@@ -120,4 +154,4 @@ async def handle_file(
 
 if __name__ == "__main__":
     # asyncio.run(db_schema.init_models())
-    asyncio.run(dp.start_polling(bot, session=get_db))
+    asyncio.run(dp.start_polling(bot))
