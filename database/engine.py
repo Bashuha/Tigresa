@@ -3,8 +3,9 @@ from sqlalchemy.orm import sessionmaker
 from typing import AsyncGenerator
 from config import DB
 
+
 engine = create_async_engine(
-    f'postgresql+asyncpg://{DB.get("user")}:{DB.get("password")}@{DB.get("host")}:{DB.get("port")}/{DB.get("database")}',
+   f'mysql+asyncmy://{DB.get("user")}:{DB.get("password")}@localhost/{DB.get("database")}',
     echo=DB.get('echo'),
     pool_recycle=3600
 )

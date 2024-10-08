@@ -1,12 +1,19 @@
-import openpyxl
 import asyncio
+
+from sqlalchemy import insert
 from config import TOKEN
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 import csv
+from database.engine import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+import database.schemas as db_schema
 
 
-async def check_csv(message: types.Message):
+async def check_csv(
+    message: types.Message,
+    session: AsyncSession,
+):
     user_id = message.from_user.id
     file_id = message.document.file_id
     file_data = await bot.get_file(file_id)
@@ -17,14 +24,39 @@ async def check_csv(message: types.Message):
         await message.reply("Некорректный формат файла! Поддерживается только CSV.")
         return
     
+    csv_value = list()
     with open('temp.csv', newline='') as csvfile:
-        spamreader = csv.reader(
+        word_reader = csv.reader(
             csvfile,
             # delimiter='',
             # quotechar='|'
         )
-        for row in spamreader:
-            print(row)
+        for row in word_reader:
+            csv_value.append(row)
+
+    insert_set_name = await session.execute(
+        insert(db_schema.SetName).
+        values(
+            name='test_csv',
+            user_id=user_id,
+        )
+    )
+    await session.commit()
+    set_id = insert_set_name.lastrowid
+    insert_word = [
+        {
+            'first_word': word[0],
+            'second_word': word[1],
+            'set_id': set_id,
+        }
+        for word in csv_value
+    ]
+
+    await session.execute(
+        insert(db_schema.Word).
+        values(insert_word)
+    )
+    await session.commit()
     # try:
     #     wb = openpyxl.load_workbook("temp.csv", data_only=True)
     #     ws = wb.active
@@ -74,9 +106,13 @@ And I can ask you about them, probably..
 
 
 @dp.message()
-async def handle_file(message: types.Message):
-    await check_csv(message)
+async def handle_file(
+    message: types.Message,
+    session: AsyncSession,
+):
+    await check_csv(message, session)
 
 
 if __name__ == "__main__":
-    asyncio.run(dp.start_polling(bot))
+    asyncio.run(db_schema.init_models())
+    asyncio.run(dp.start_polling(bot, session=get_db))

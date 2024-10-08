@@ -37,7 +37,8 @@ class Word(Base):
     __tablename__ = 'word'
 
     id = Column(INTEGER(), primary_key=True)
-    name = Column(TEXT(), nullable=False)
+    first_word = Column(TEXT(), nullable=False)
+    second_word = Column(TEXT(), nullable=False)
     set_id = Column(ForeignKey(SetName.id), nullable=False)
 
 
