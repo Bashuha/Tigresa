@@ -128,18 +128,18 @@ class HelloFilter(Filter):
 
 
 class DBFilter(Filter):
-    def __init__(
-        self,
-        session: AsyncSession = get_db,
-    ):
-        self.session = session
+    # def __init__(
+    #     self,
+    #     session: AsyncSession = get_db,
+    # ):
+    #     self.session = session
 
     async def __call__(
         self,
         message: types.Message,
     ):
         if message.document:
-            conn = [db async for db in self.session()][0]
+            conn = [db async for db in get_db()][0]
             return {"session":conn}
         return False
 
