@@ -2,6 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from typing import AsyncGenerator
 from config import DB
+from contextlib import asynccontextmanager
+from aiogram.filters import Filter
+from aiogram.types import Message
 
 
 engine = create_async_engine(
@@ -16,6 +19,19 @@ asyns_connection = sessionmaker(
     bind=engine,
 )
 
+
+@asynccontextmanager
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with asyns_connection() as session:
         yield session
+
+
+class DBFilter(Filter):
+    async def __call__(
+        self,
+        message: Message,
+    ):
+        if message.document:
+            async with get_db() as session:
+                return {"session": session}
+        return False

@@ -1,12 +1,11 @@
 import asyncio
-from typing import Any, Dict, Optional, Union
 
 from sqlalchemy import insert, select
 from config import TOKEN
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart, Command, Filter
+from aiogram.filters import CommandStart, Command
 import csv
-from database.engine import get_db
+from database.engine import DBFilter
 from sqlalchemy.ext.asyncio import AsyncSession
 import database.schemas as db_schema
 
@@ -71,6 +70,7 @@ async def check_csv(
         values(insert_word)
     )
     await session.commit()
+    await session.close()
     
     await message.reply("CSV успешно проверен!")
 
@@ -99,49 +99,6 @@ And I save your words for you
 And I can ask you about them, probably..
 """
     await message.answer(text=text)
-
-
-from aiogram.types import Message, User
-
-class HelloFilter(Filter):
-    def __init__(self, name: Optional[str] = None) -> None:
-        self.name = name
-
-    async def __call__(
-        self,
-        message: Message,
-        event_from_user: User,
-        # Filters also can accept keyword parameters like in handlers
-    ) -> Union[bool, Dict[str, Any]]:
-        if message.text.casefold() == "hello":
-            # Returning a dictionary that will update the context data
-            return {"name": event_from_user.mention_html(name=self.name)}
-        return False
-
-
-# @dp.message(HelloFilter())
-# async def my_handler(
-#     message: Message, name: str  # Now we can accept "name" as named parameter
-# ) -> Any:
-#     return message.answer("Hello, {name}!".format(name=name))
-
-
-
-class DBFilter(Filter):
-    # def __init__(
-    #     self,
-    #     session: AsyncSession = get_db,
-    # ):
-    #     self.session = session
-
-    async def __call__(
-        self,
-        message: types.Message,
-    ):
-        if message.document:
-            conn = [db async for db in get_db()][0]
-            return {"session":conn}
-        return False
 
 
 @dp.message(DBFilter())
