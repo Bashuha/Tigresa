@@ -5,6 +5,8 @@ from config import DB
 from contextlib import asynccontextmanager
 from aiogram.filters import Filter
 from aiogram.types import Message
+from config import TOKEN
+from aiogram import Bot
 
 
 engine = create_async_engine(
@@ -18,6 +20,9 @@ asyns_connection = sessionmaker(
     class_=AsyncSession,
     bind=engine,
 )
+
+
+bot = Bot(token=TOKEN)
 
 
 @asynccontextmanager
