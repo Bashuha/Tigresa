@@ -36,7 +36,6 @@ class DBFilter(Filter):
         self,
         message: Message,
     ):
-        if message.document:
-            async with get_db() as session:
-                return {"session": session}
+        async with get_db() as session:
+            return {"session": session}
         return False

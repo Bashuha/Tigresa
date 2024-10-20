@@ -1,6 +1,6 @@
 __all__ = ("router", )
 
-from magic_filter import F
+# from magic_filter import F
 from database.engine import DBFilter
 from aiogram import Router, F
 from aiogram import types
@@ -17,16 +17,20 @@ router = Router()
 
 @router.message(
     SendCSV.sending_csv,
-    F.document.cast().as_('document'),   
+    F.document.mime_type == 'text/csv',
     DBFilter(),
 )
 async def handle_file(
-    document,
+    # document,
     message: types.Message,
     session: AsyncSession,
     state: FSMContext,
 ):
-    await check_csv(document, message, session)
+    await check_csv(
+        # document,
+        message,
+        session
+    )
     await state.clear()
 
 
@@ -48,15 +52,25 @@ async def incorrect_message_sended(message: types.Message):
     )
 
 
-@router.message(StateFilter(None), Command('challenge'))
+@router.message(
+    StateFilter(None),
+    Command('challenge'),
+    DBFilter(),
+)
 async def start_challenge(
     message: types.Message,
     state: FSMContext,
+    session: AsyncSession,
 ):
     # здесь будет запрос на получение сетов пользователя
-    user_sets = [1,2,3,4]
+    user_sets = ["1","2","3","4"]
     await message.answer(
         text="Выберите, из какого набора сделать тест",
-        reply_markup=make_row_keyboard(user_sets)
+        reply_markup=await make_row_keyboard(
+            session,
+            user_sets,
+            message.from_user.id,
+        )
     )
     await state.set_state(Challenge.choose_set)
+    await state.clear()

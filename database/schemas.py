@@ -39,7 +39,7 @@ class Word(Base):
     id = Column(INTEGER(), primary_key=True)
     first_word = Column(TEXT(), nullable=False)
     second_word = Column(TEXT(), nullable=False)
-    set_id = Column(ForeignKey(SetName.id), nullable=False)
+    set_id = Column(ForeignKey(SetName.id, ondelete='cascade'), nullable=False)
 
 
 async def init_models():
@@ -47,3 +47,4 @@ async def init_models():
         # await session.run_sync(Base.metadata.drop_all)
         # await session.run_sync(metadata.create_all)
         await session.run_sync(Base.metadata.create_all)
+        # await session.close()

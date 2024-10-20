@@ -2,7 +2,8 @@ import asyncio
 from database.engine import bot
 from aiogram import Dispatcher
 from default.router import router as default_commandas_router
-from default.router import router as set_router
+from sets.router import router as set_router
+import database.schemas as db_schema
 
 
 dp = Dispatcher()
