@@ -20,7 +20,7 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(INTEGER(), primary_key=True)
-    tg_id = Column(INTEGER(), nullable=False)
+    tg_id = Column(VARCHAR(255), nullable=False)
 
 
 class SetName(Base):
@@ -44,7 +44,7 @@ class Word(Base):
 
 async def init_models():
     async with engine.begin() as session:
-        # await session.run_sync(Base.metadata.drop_all)
+        await session.run_sync(Base.metadata.drop_all)
         # await session.run_sync(metadata.create_all)
         await session.run_sync(Base.metadata.create_all)
         # await session.close()

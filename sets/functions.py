@@ -46,7 +46,7 @@ async def check_csv(
 ):
     # потом проверим и добавим (если надо) пользователя
     # tg_user_id = document.from_user.id
-    tg_user_id = message.from_user.id
+    tg_user_id = str(message.from_user.id)
     check_user = await session.execute(
         select(db_schema.User.id).
         where(db_schema.User.tg_id == tg_user_id)
