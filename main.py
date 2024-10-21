@@ -11,6 +11,12 @@ dp.include_router(default_commandas_router)
 dp.include_router(set_router)
 
 
+async def main():
+    await dp.start_polling(bot)
+    await db_schema.init_models()
+
+
 if __name__ == "__main__":
-    # asyncio.run(db_schema.init_models())
-    asyncio.run(dp.start_polling(bot))
+    # asyncio.run(dp.start_polling(bot))
+    asyncio.run(main())
+    
