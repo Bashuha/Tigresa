@@ -38,4 +38,3 @@ class DBFilter(Filter):
     ):
         async with get_db() as session:
             return {"session": session}
-        return False

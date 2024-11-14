@@ -4,39 +4,7 @@ import database.schemas as db_schema
 from sqlalchemy import insert, select
 from aiogram import types
 from database.engine import bot
-from aiogram.fsm.state import  StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-
-async def make_row_keyboard(
-    session: AsyncSession,
-    items: list[str],
-    user_id: int,
-) -> ReplyKeyboardMarkup:
-    """
-    Создаёт реплай-клавиатуру с кнопками в один ряд
-    :param items: список текстов для кнопок
-    :return: объект реплай-клавиатуры
-    """
-    # переделать так, чтобы список кнопок был бесконечный
-    # и их можно было листать
-    set_query = await session.execute(
-        select(db_schema.SetName.name, db_schema.SetName.id).
-        where(db_schema.SetName.user_id == 1)
-    )
-    set_name_id = set_query.all()
-    await session.close()
-    id_name_dict = {key:value for (key, value) in set_name_id}
-    # map(lambda set_value: id_name_dict.update({set_value.name: set_value.id}), set_name_id)
-    # upd_dict = lambda set_value: id_name_dict.update({set_value.name: set_value.id})
-    # for i in set_name_id:
-        # upd_dict(i)
-    set_names = list(id_name_dict.keys())
-    set_names.append("12345")
-    set_names.extend(['11111111111', '11111111111' ,'11111111111', '11111111111', '11111111111', '11111111111', '11111111111', '11111111111'])
-    # row = [KeyboardButton(text=item) for item in items]
-    row = [KeyboardButton(text=item) for item in set_names]
-    return ReplyKeyboardMarkup(keyboard=[row], resize_keyboard=True)
 
 
 async def check_csv(
@@ -126,12 +94,3 @@ async def check_csv(
     #     chat_id=tg_user_id,
     #     text='CSV успешно проверен!',
     # )
-
-
-class Challenge(StatesGroup):
-    choose_set = State()
-    enter_word = State()
-
-
-class SendCSV(StatesGroup):
-    sending_csv = State()

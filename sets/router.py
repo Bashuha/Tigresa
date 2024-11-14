@@ -8,8 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sets.functions import check_csv
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from sets.functions import Challenge, SendCSV
-from sets.functions import make_row_keyboard
+from sets.states import SendCSV
 
 
 router = Router()
@@ -50,27 +49,3 @@ async def incorrect_message_sended(message: types.Message):
     await message.answer(
         text="Мне кроме CSV ничего не надо сейчас, попробуйте еще разок"
     )
-
-
-@router.message(
-    StateFilter(None),
-    Command('challenge'),
-    DBFilter(),
-)
-async def start_challenge(
-    message: types.Message,
-    state: FSMContext,
-    session: AsyncSession,
-):
-    # здесь будет запрос на получение сетов пользователя
-    user_sets = ["1","2","3","4"]
-    await message.answer(
-        text="Выберите, из какого набора сделать тест",
-        reply_markup=await make_row_keyboard(
-            session,
-            user_sets,
-            message.from_user.id,
-        )
-    )
-    await state.set_state(Challenge.choose_set)
-    await state.clear()

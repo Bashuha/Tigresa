@@ -1,14 +1,17 @@
 import asyncio
 from database.engine import bot
 from aiogram import Dispatcher
+import database.schemas as db_schema
+
 from default.router import router as default_commandas_router
 from sets.router import router as set_router
-import database.schemas as db_schema
+from challenge.router import router as challenge_router
 
 
 dp = Dispatcher()
 dp.include_router(default_commandas_router)
 dp.include_router(set_router)
+dp.include_router(challenge_router)
 
 
 async def start_polling():
