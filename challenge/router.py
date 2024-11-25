@@ -6,7 +6,7 @@ from aiogram import types
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from challenge.functions import make_row_keyboard, word_sender
+from challenge.functions import make_row_keyboard, create_words_for_challenge, word_sender
 from  challenge.states import Challenge
 
 
@@ -47,7 +47,7 @@ async def generate_challenge(
     state: FSMContext,
     session: AsyncSession,
 ):
-    set_name_id_dict = state.get_data()
+    set_name_id_dict = await state.get_data()
     set_id = set_name_id_dict.get(message.text)
     if not set_id:
         return await message.answer("Такого набора нет, надо выбрать из предложенного списка")
@@ -56,9 +56,10 @@ async def generate_challenge(
         text="Сейчас буду присылать слова, по очереди, секундочку...",
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    # поискать навазние сета тут и найти от него id
-        
-    words = await word_sender(session, set_id)
+    # разобраться с async_generator, не работает пока        
+    words = await create_words_for_challenge(session, set_id)
+    await state.update_data(words)
+    first_word = word_sender(words)
     # await state.set_state(Challenge.enter_word)
     await state.clear()
-    await message.answer(words)
+    await message.answer(first_word)
