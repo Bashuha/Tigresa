@@ -16,11 +16,11 @@ class Base(DeclarativeBase):
     pass
 
 
-class User(Base):
-    __tablename__ = 'user'
+# class User(Base):
+#     __tablename__ = 'user'
 
-    id = Column(INTEGER(), primary_key=True)
-    tg_id = Column(VARCHAR(255), nullable=False)
+#     id = Column(INTEGER(), primary_key=True)
+#     tg_id = Column(VARCHAR(255), nullable=False)
 
 
 class SetName(Base):
@@ -28,7 +28,7 @@ class SetName(Base):
 
     id = Column(INTEGER(), primary_key=True)
     name = Column(VARCHAR(100), nullable=False)
-    user_id = Column(ForeignKey(User.id), nullable=False)
+    user_id = Column(VARCHAR(255), nullable=False)
 
     words: Mapped[Word] = relationship()
 

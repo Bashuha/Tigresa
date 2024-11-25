@@ -6,7 +6,7 @@ from aiogram import types
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from challenge.functions import make_row_keyboard
+from challenge.functions import make_row_keyboard, word_sender
 from  challenge.states import Challenge
 
 
@@ -24,10 +24,8 @@ async def start_challenge(
     session: AsyncSession,
 ):
     # здесь будет запрос на получение сетов пользователя
-    user_sets = ["1","2","3","4"]
     set_keyboard_dict: dict = await make_row_keyboard(
         session,
-        user_sets,
         message.from_user.id,
     )
     await message.answer(
@@ -49,14 +47,18 @@ async def generate_challenge(
     state: FSMContext,
     session: AsyncSession,
 ):
+    set_name_id_dict = state.get_data()
+    set_id = set_name_id_dict.get(message.text)
+    if not set_id:
+        return await message.answer("Такого набора нет, надо выбрать из предложенного списка")
     # проверить сообщение
     await message.answer(
         text="Сейчас буду присылать слова, по очереди, секундочку...",
         reply_markup=types.ReplyKeyboardRemove(),
     )
     # поискать навазние сета тут и найти от него id
-    set_name_id_dict = state.get_data()
-    set_id = set_name_id_dict[message]
-    await state.set_state(Challenge.enter_word)
-
-    await message.answer()
+        
+    words = await word_sender(session, set_id)
+    # await state.set_state(Challenge.enter_word)
+    await state.clear()
+    await message.answer(words)

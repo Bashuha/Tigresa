@@ -6,7 +6,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 async def make_row_keyboard(
     session: AsyncSession,
-    items: list[str],
     user_id: int,
 ) -> ReplyKeyboardMarkup:
     """
@@ -14,11 +13,9 @@ async def make_row_keyboard(
     :param items: список текстов для кнопок
     :return: объект реплай-клавиатуры
     """
-    # переделать так, чтобы список кнопок был бесконечный
-    # и их можно было листать
     set_query = await session.execute(
         select(db_schema.SetName.name, db_schema.SetName.id).
-        where(db_schema.SetName.user_id == 1)
+        where(db_schema.SetName.user_id == user_id)
     )
     set_name_id = set_query.all()
     await session.close()
@@ -33,8 +30,10 @@ async def make_row_keyboard(
     return result_dict
 
 
-async def word_sender(session: AsyncSession, user_tg_id: int):
+async def word_sender(session: AsyncSession, set_id: int):
     word_query = await session.execute(
         select(db_schema.Word.first_word, db_schema.Word.second_word).
-        where(db_schema.Word.set_id == 1)
+        where(db_schema.Word.set_id == set_id)
     )
+    words = word_query.all()
+    return words
