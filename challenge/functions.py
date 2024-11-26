@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 async def make_row_keyboard(
     session: AsyncSession,
     user_id: int,
-) -> ReplyKeyboardMarkup:
+) -> dict:
     """
     Создаёт реплай-клавиатуру с кнопками в один ряд
     :param items: список текстов для кнопок
@@ -31,7 +31,7 @@ async def make_row_keyboard(
     return result_dict
 
 
-async def create_words_for_challenge(session: AsyncSession, set_id: int):
+async def create_words_for_challenge(session: AsyncSession, set_id: int) -> dict:
     word_query = await session.execute(
         select(db_schema.Word.first_word, db_schema.Word.second_word).
         where(db_schema.Word.set_id == set_id)
@@ -45,4 +45,19 @@ async def create_words_for_challenge(session: AsyncSession, set_id: int):
 async def word_sender(words_dict: dict):
     for word in words_dict.values():
         yield word
+
+
+async def check_word_form_message(
+    challenge_dict: dict,
+    message_text: str,
+) -> dict:
+    dict_with_answers = {}
+    current_word = challenge_dict["current_word"]
+    get_word = challenge_dict["words_for_challenge"].get(message_text)
+    if get_word == current_word:
+        dict_with_answers[current_word] = 0
+    else:
+        dict_with_answers[current_word] = 1
+    challenge_dict["dict_with_answers"] = dict_with_answers
+    return challenge_dict
     
