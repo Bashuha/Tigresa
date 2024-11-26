@@ -58,8 +58,10 @@ async def generate_challenge(
     )
     # разобраться с async_generator, не работает пока        
     words = await create_words_for_challenge(session, set_id)
-    await state.update_data(words)
-    first_word = word_sender(words)
+    challenge_dict = {"words_for_challenge": words, "current_word": None}
+    first_word = await anext(word_sender(words), "The end of your set")
+    challenge_dict["current_word"] = first_word
     # await state.set_state(Challenge.enter_word)
+    await state.update_data(challenge_dict)
     await state.clear()
     await message.answer(first_word)
