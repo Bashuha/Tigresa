@@ -1,7 +1,7 @@
 import csv
 from sqlalchemy.ext.asyncio import AsyncSession
 import database.schemas as db_schema
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, delete
 from aiogram import types
 from database.engine import bot
 
@@ -63,3 +63,14 @@ async def check_csv(
     await session.commit()
     await session.close()
     await message.reply("CSV успешно проверен!")
+
+
+async def delete_set(
+    set_id: int,
+    session: AsyncSession,
+):
+    await session.execute(
+        delete(db_schema.SetName).
+        where(db_schema.SetName.id == set_id)
+    )
+    await session.commit()

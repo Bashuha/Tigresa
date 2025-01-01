@@ -6,7 +6,7 @@ from aiogram import types
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from challenge.functions import check_word_form_message, make_row_keyboard, create_words_for_challenge, word_sender
+from challenge.functions import check_word_form_message, make_set_row_keyboard, create_words_for_challenge
 from  challenge.states import Challenge
 
 
@@ -25,7 +25,7 @@ async def start_challenge(
     session: AsyncSession,
 ):
     # здесь будет запрос на получение сетов пользователя
-    set_keyboard_dict: dict = await make_row_keyboard(
+    set_keyboard_dict: dict = await make_set_row_keyboard(
         session,
         message.from_user.id,
     )
@@ -57,17 +57,10 @@ async def generate_challenge(
         text="Сейчас буду присылать слова, по очереди, секундочку...",
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    # разобраться с async_generator, не работает пока        
-    words = await create_words_for_challenge(session, set_id)
-    first_word_pair = list(words.items())[0]
-    # current_words_pair = {first_word_pair[0]}
-    challenge_dict = {"words_for_challenge": words, "current_words_pair": None}
-    first_word = await anext(word_sender(words), DEFAULT_GEN_VALUE)
-    challenge_dict["current_word"] = first_word
-    # await state.set_state(Challenge.enter_word)
+    challenge_dict, send_word = await create_words_for_challenge(session, set_id)
     await state.update_data(challenge_dict)
     await state.set_state(Challenge.enter_word)
-    await message.answer(first_word)
+    await message.answer(send_word)
 
 
 @router.message(
@@ -79,10 +72,15 @@ async def check_incoming_word(
     state: FSMContext,
 ):
     challenge_dict = await state.get_data()
-    updated_dict = await check_word_form_message(
+    updated_dict, result_trigger = await check_word_form_message(
         challenge_dict=challenge_dict.copy(),
         message_text=message.text,
     )
-    updated_dict['current_word'] = await anext(
-        word_sender(), DEFAULT_GEN_VALUE)
-    await state.update_data(challenge_dict)
+    if not result_trigger:
+        answer = ""
+        for key, val in  updated_dict.get("dict_with_answers").items():
+            answer += f"{key} - {val}\n"
+            await state.clear()
+        return await message.answer(answer)
+    await state.update_data(updated_dict)
+    await message.answer(updated_dict["sended_word"])

@@ -1,5 +1,6 @@
 from aiogram.fsm.state import  StatesGroup, State
 
 
-class SendCSV(StatesGroup):
+class SetManager(StatesGroup):
     sending_csv = State()
+    del_set = State()
